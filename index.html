@@ -32,7 +32,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- 아이콘 컴포넌트 (속성 확장) ---
+        // --- 아이콘 컴포넌트 ---
         const Icon = ({ name, size = 24, className = "", strokeWidth = 2 }) => {
             const iconRef = useRef(null);
             useEffect(() => {
@@ -479,7 +479,6 @@
                                                     <div>
                                                         <div className="flex items-center space-x-2">
                                                             <span className="font-bold text-gray-800">{item.type==='purchase'?'입고':'판매'} {formatNumber(item.amount)}L</span>
-                                                            {/* 유종 배지 추가 */}
                                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getFuelStyle(item.fuelType)}`}>
                                                                 {currentInventory[item.fuelType].name}
                                                             </span>
@@ -490,13 +489,8 @@
                                                 <div className="text-right"><p className="font-bold text-gray-900">{formatNumber(item.total)}원</p><p className="text-xs text-gray-400">@{formatNumber(item.price)}</p></div>
                                             </div>
                                             <div className="flex justify-end space-x-3 mt-2 pt-2 border-t border-gray-50">
-                                                {/* 수정/삭제 버튼: 진한 검은색 아이콘으로 변경 */}
-                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-black hover:bg-gray-200 rounded-lg transition-colors border border-gray-200">
-                                                    <Icon name="edit-2" size={20} strokeWidth={3} />
-                                                </button>
-                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-black hover:bg-gray-200 rounded-lg transition-colors border border-gray-200">
-                                                    <Icon name="trash-2" size={20} strokeWidth={3} />
-                                                </button>
+                                                <button onClick={() => setEditingTransaction(item)} className="px-3 py-1.5 text-sm font-bold text-black bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">수정</button>
+                                                <button onClick={() => requestDelete(item.id)} className="px-3 py-1.5 text-sm font-bold text-black bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">삭제</button>
                                             </div>
                                         </div>
                                     ))}
