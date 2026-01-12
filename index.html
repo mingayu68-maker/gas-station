@@ -204,11 +204,13 @@
             // 핸들러들
             const handleStationChange = (id) => { setCurrentStationId(id); setStationSelectorOpen(false); showToast(`${getStationName(id)} 전환`); };
 
+            // [개선된 Focus 핸들러] 키패드가 올라올 때 화면을 충분히 위로 올림
             const handleFocus = (e) => {
-                // 모바일에서 키패드가 올라올 때 화면 가림 방지를 위해 해당 요소를 화면 중앙으로 스크롤
                 setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
+                    // smooth 대신 auto를 사용하여 즉각적으로 반응하게 할 수도 있지만, 부드러운 이동을 위해 smooth 유지
+                    // block: 'center'는 요소를 화면 중앙에 위치시킴. 
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                }, 400); // 키패드 올라오는 시간을 고려하여 딜레이
             };
 
             const handleSubmit = (e) => {
@@ -472,8 +474,9 @@
                                                 <div className="text-right"><p className="font-bold text-gray-900">{formatNumber(item.total)}원</p><p className="text-xs text-gray-400">@{formatNumber(item.price)}</p></div>
                                             </div>
                                             <div className="flex justify-end space-x-2 mt-2 pt-2 border-t border-gray-50">
-                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-gray-500 hover:text-green-600 bg-gray-100 hover:bg-green-50 rounded-lg transition-colors"><Icon name="edit-2" size={20} /></button>
-                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-50 rounded-lg transition-colors"><Icon name="trash-2" size={20} /></button>
+                                                {/* 수정/삭제 버튼: 검은색 아이콘으로 변경 */}
+                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-black hover:bg-gray-100 rounded-lg transition-colors"><Icon name="edit-2" size={20} /></button>
+                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-black hover:bg-gray-100 rounded-lg transition-colors"><Icon name="trash-2" size={20} /></button>
                                             </div>
                                         </div>
                                     ))}
