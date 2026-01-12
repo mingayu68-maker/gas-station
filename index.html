@@ -204,6 +204,13 @@
             // 핸들러들
             const handleStationChange = (id) => { setCurrentStationId(id); setStationSelectorOpen(false); showToast(`${getStationName(id)} 전환`); };
 
+            const handleFocus = (e) => {
+                // 모바일에서 키패드가 올라올 때 화면 가림 방지를 위해 해당 요소를 화면 중앙으로 스크롤
+                setTimeout(() => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            };
+
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if (!inputAmount || !inputPrice) return;
@@ -436,7 +443,7 @@
                             </>
                         )}
                         {activeTab === 'input' && (
-                            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-60">
                                 <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center"><Icon name="plus" size={20} className="mr-2 text-blue-600"/>입력</h2>
                                 <p className="text-xs text-gray-400 mb-6 flex items-center"><Icon name="map-pin" size={12} className="mr-1"/> 현재 지점: <span className="text-blue-600 font-bold ml-1">{currentStationName}</span></p>
                                 <form onSubmit={handleSubmit} className="space-y-5">
@@ -445,8 +452,8 @@
                                         <div className="space-y-1"><label className="text-xs font-bold text-gray-500 ml-1">날짜</label><input type="date" value={inputDate} onChange={e=>setInputDate(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"/></div>
                                         <div className="space-y-1"><label className="text-xs font-bold text-gray-500 ml-1">유종</label><select value={inputFuelType} onChange={e=>setInputFuelType(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"><option value="gasoline">휘발유</option><option value="diesel">경유</option><option value="kerosene">등유</option></select></div>
                                     </div>
-                                    <div className="space-y-1"><label className="text-xs font-bold text-gray-500 ml-1">{inputType==='purchase'?'입고량 (L)':'판매량 (L)'}</label><input type="number" placeholder="0" value={inputAmount} onChange={e=>setInputAmount(e.target.value)} className="w-full p-3 pl-4 bg-gray-50 border border-gray-200 rounded-xl text-lg font-bold"/></div>
-                                    <div className="space-y-1"><label className="text-xs font-bold text-gray-500 ml-1">{inputType==='purchase'?'매입 단가':'판매 단가'}</label><input type="number" placeholder="0" value={inputPrice} onChange={e=>setInputPrice(e.target.value)} className="w-full p-3 pl-4 bg-gray-50 border border-gray-200 rounded-xl text-lg font-bold"/></div>
+                                    <div className="space-y-1"><label className="text-xs font-bold text-gray-500 ml-1">{inputType==='purchase'?'입고량 (L)':'판매량 (L)'}</label><input type="number" onFocus={handleFocus} placeholder="0" value={inputAmount} onChange={e=>setInputAmount(e.target.value)} className="w-full p-3 pl-4 bg-gray-50 border border-gray-200 rounded-xl text-lg font-bold"/></div>
+                                    <div className="space-y-1"><label className="text-xs font-bold text-gray-500 ml-1">{inputType==='purchase'?'매입 단가':'판매 단가'}</label><input type="number" onFocus={handleFocus} placeholder="0" value={inputPrice} onChange={e=>setInputPrice(e.target.value)} className="w-full p-3 pl-4 bg-gray-50 border border-gray-200 rounded-xl text-lg font-bold"/></div>
                                     <button type="submit" className={`w-full py-4 rounded-xl text-white font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center ${inputType==='purchase'?'bg-green-600':'bg-blue-600'}`}><Icon name="save" size={18} className="mr-2"/>저장하기</button>
                                 </form>
                             </div>
@@ -465,8 +472,8 @@
                                                 <div className="text-right"><p className="font-bold text-gray-900">{formatNumber(item.total)}원</p><p className="text-xs text-gray-400">@{formatNumber(item.price)}</p></div>
                                             </div>
                                             <div className="flex justify-end space-x-2 mt-2 pt-2 border-t border-gray-50">
-                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"><Icon name="edit-2" size={16} /></button>
-                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Icon name="trash-2" size={16} /></button>
+                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-gray-500 hover:text-green-600 bg-gray-100 hover:bg-green-50 rounded-lg transition-colors"><Icon name="edit-2" size={20} /></button>
+                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-50 rounded-lg transition-colors"><Icon name="trash-2" size={20} /></button>
                                             </div>
                                         </div>
                                     ))}
@@ -479,18 +486,18 @@
                                 <h2 className="text-lg font-bold text-gray-800">설정</h2>
                                 <div className={`p-5 rounded-2xl shadow-sm border ${appSettings.safeMode ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100'}`}>
                                     <div className="flex justify-between items-center mb-2">
-                                        <div className="flex items-center"><div className={`p-2 rounded-lg mr-3 ${appSettings.safeMode ? 'bg-green-200 text-green-700' : 'bg-gray-100 text-gray-500'}`}><Icon name="lock" size={20}/></div><div><h3 className="font-bold text-gray-800">데이터 보호 모드</h3><p className="text-xs text-gray-500">{appSettings.safeMode ? '삭제 버튼이 비활성화됩니다.' : '데이터 삭제가 가능합니다.'}</p></div></div>
+                                        <div className="flex items-center"><div className={`p-2 rounded-lg mr-3 ${appSettings.safeMode ? 'bg-green-200 text-green-700' : 'bg-gray-100 text-gray-500'}`}><Icon name="lock" size={20}/></div><div><h3 className="font-bold text-gray-800">데이터 보호 모드</h3><p className="text-xs text-gray-500">{appSettings.safeMode ? '삭제 버튼을 보호합니다.' : '데이터 삭제가 가능합니다.'}</p></div></div>
                                         <button onClick={()=>setAppSettings({...appSettings, safeMode: !appSettings.safeMode})} className={`w-12 h-6 rounded-full transition-colors relative ${appSettings.safeMode ? 'bg-green-500':'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${appSettings.safeMode ? 'left-7':'left-1'}`}></div></button>
                                     </div>
                                 </div>
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                                     <div className="flex items-center mb-3"><Icon name="target" size={18} className="text-purple-600 mr-2"/><h3 className="font-bold text-gray-800">월 목표 금액</h3></div>
-                                    <input type="number" value={currentGoal} onChange={e=>setAppSettings({...appSettings, goals: {...appSettings.goals, [currentStationId]: Number(e.target.value)}})} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold"/>
+                                    <input type="number" onFocus={handleFocus} value={currentGoal} onChange={e=>setAppSettings({...appSettings, goals: {...appSettings.goals, [currentStationId]: Number(e.target.value)}})} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold"/>
                                     <div className="text-right mt-2 text-sm text-gray-500 font-medium">({formatNumber(currentGoal)}원)</div>
                                 </div>
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                                     <div className="flex items-center mb-3"><Icon name="map-pin" size={18} className="text-indigo-600 mr-2"/><h3 className="font-bold text-gray-800">지점 이름 관리</h3></div>
-                                    <div className="space-y-2">{STATION_IDS.map(id => (<div key={id} className="flex items-center"><span className="w-8 text-xs font-bold text-gray-400">{id.toUpperCase()}</span><input type="text" value={appSettings.stationNames[id]} onChange={e=>setAppSettings({...appSettings, stationNames: {...appSettings.stationNames, [id]: e.target.value}})} className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold"/></div>))}</div>
+                                    <div className="space-y-2">{STATION_IDS.map(id => (<div key={id} className="flex items-center"><span className="w-8 text-xs font-bold text-gray-400">{id.toUpperCase()}</span><input onFocus={handleFocus} type="text" value={appSettings.stationNames[id]} onChange={e=>setAppSettings({...appSettings, stationNames: {...appSettings.stationNames, [id]: e.target.value}})} className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold"/></div>))}</div>
                                 </div>
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                                     <div className="flex items-center mb-4"><Icon name="save" size={18} className="text-blue-600 mr-2"/><h3 className="font-bold text-gray-800">데이터 백업 & 복구</h3></div>
@@ -523,8 +530,8 @@
                             <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-fade-in">
                                 <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold text-gray-900">거래 수정</h3><button onClick={() => setEditingTransaction(null)}><Icon name="x" size={20}/></button></div>
                                 <form onSubmit={handleUpdateTransaction} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-3"><div><label className="text-xs text-gray-500 font-bold ml-1">날짜</label><input type="date" value={editingTransaction.date} onChange={(e) => setEditingTransaction({...editingTransaction, date: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div><div><label className="text-xs text-gray-500 font-bold ml-1">수량 (L)</label><input type="number" value={editingTransaction.amount} onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div></div>
-                                    <div><label className="text-xs text-gray-500 font-bold ml-1">단가 (원)</label><input type="number" value={editingTransaction.price} onChange={(e) => setEditingTransaction({...editingTransaction, price: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div>
+                                    <div className="grid grid-cols-2 gap-3"><div><label className="text-xs text-gray-500 font-bold ml-1">날짜</label><input type="date" value={editingTransaction.date} onChange={(e) => setEditingTransaction({...editingTransaction, date: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div><div><label className="text-xs text-gray-500 font-bold ml-1">수량 (L)</label><input onFocus={handleFocus} type="number" value={editingTransaction.amount} onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div></div>
+                                    <div><label className="text-xs text-gray-500 font-bold ml-1">단가 (원)</label><input onFocus={handleFocus} type="number" value={editingTransaction.price} onChange={(e) => setEditingTransaction({...editingTransaction, price: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div>
                                     <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center"><Icon name="check" size={18} className="mr-2"/> 수정 완료</button>
                                 </form>
                             </div>
