@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>주유소 수익 매니저 Pro</title>
+    <title>(사)한국주유소협회 경기도회 주유소 수익 매니저 Pro</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React & ReactDOM -->
@@ -32,7 +32,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- 아이콘 컴포넌트 (Lucide Wrapper) ---
+        // --- 아이콘 컴포넌트 ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const iconRef = useRef(null);
             useEffect(() => {
@@ -47,7 +47,7 @@
             return <span ref={iconRef} className="inline-flex items-center justify-center" />;
         };
 
-        // --- 유틸리티 함수 ---
+        // --- 유틸리티 ---
         const formatNumber = (num) => {
             if (num === undefined || num === null || isNaN(num)) return "0";
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -72,7 +72,7 @@
             }
         };
 
-        // --- 상수 및 초기값 ---
+        // --- 상수 ---
         const STATION_IDS = ['s1', 's2', 's3'];
         const INITIAL_INVENTORY_TEMPLATE = {
             gasoline: { amount: 0, avgPrice: 0, color: 'bg-yellow-400', text: 'text-yellow-700', name: '휘발유' },
@@ -80,17 +80,17 @@
             kerosene: { amount: 0, avgPrice: 0, color: 'bg-red-500', text: 'text-red-700', name: '등유' }
         };
 
-        // --- 로컬 스토리지 키 ---
+        // --- 스토리지 키 ---
         const STORAGE_KEY_TRANSACTIONS = 'gas_station_transactions_v6';
         const STORAGE_KEY_INVENTORY = 'gas_station_inventory_v6';
         const STORAGE_KEY_SETTINGS = 'gas_station_settings_v6';
 
-        // --- 메인 컴포넌트 ---
+        // --- 메인 앱 ---
         const GasStationProfitApp = () => {
             const [activeTab, setActiveTab] = useState('dashboard');
             const [currentStationId, setCurrentStationId] = useState('s1');
 
-            // --- 데이터 상태 ---
+            // 데이터 상태
             const [transactions, setTransactions] = useState(() => {
                 try {
                     const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
@@ -124,21 +124,11 @@
                         alertThreshold: 3000,
                         goals: { s1: 5000000, s2: 5000000, s3: 5000000 },
                         stationNames: { s1: '1호점 (본점)', s2: '2호점 (직영)', s3: '3호점 (대리점)' },
-                        safeMode: true // 기본값: 안전 모드 켜짐 (삭제 방지)
-                    };
-                    return {
-                        ...defaults,
-                        ...parsed,
-                        goals: { ...defaults.goals, ...(parsed.goals || {}) },
-                        stationNames: { ...defaults.stationNames, ...(parsed.stationNames || {}) }
-                    };
-                } catch (e) { 
-                    return { 
-                        alertThreshold: 3000, 
-                        goals: { s1: 5000000, s2: 5000000, s3: 5000000 },
-                        stationNames: { s1: '1호점 (본점)', s2: '2호점 (직영)', s3: '3호점 (대리점)' },
                         safeMode: true
-                    }; 
+                    };
+                    return { ...defaults, ...parsed, goals: { ...defaults.goals, ...(parsed.goals || {}) }, stationNames: { ...defaults.stationNames, ...(parsed.stationNames || {}) } };
+                } catch (e) { 
+                    return { alertThreshold: 3000, goals: { s1: 5000000, s2: 5000000, s3: 5000000 }, stationNames: { s1: '1호점 (본점)', s2: '2호점 (직영)', s3: '3호점 (대리점)' }, safeMode: true }; 
                 }
             });
 
@@ -177,27 +167,19 @@
             const [inputAmount, setInputAmount] = useState('');
             const [inputPrice, setInputPrice] = useState('');
 
-            // 계산 로직
-            const stationTransactions = useMemo(() => {
-                return transactions.filter(t => t.stationId === currentStationId);
-            }, [transactions, currentStationId]);
+            // 계산
+            const stationTransactions = useMemo(() => transactions.filter(t => t.stationId === currentStationId), [transactions, currentStationId]);
 
             const summary = useMemo(() => {
-                let totalRevenue = 0;
-                let totalProfit = 0;
-                let totalSalesVolume = { gasoline: 0, diesel: 0, kerosene: 0 };
-                let monthlyProfits = {}; 
-
+                let totalRevenue = 0; let totalProfit = 0; let totalSalesVolume = { gasoline: 0, diesel: 0, kerosene: 0 }; let monthlyProfits = {}; 
                 stationTransactions.forEach(t => {
                     if (t.type === 'sale') {
                         const transactionTotal = t.total || (t.amount * t.price);
-                        totalRevenue += transactionTotal;
-                        totalProfit += (t.profit || 0);
+                        totalRevenue += transactionTotal; totalProfit += (t.profit || 0);
                         if (totalSalesVolume[t.fuelType] !== undefined) totalSalesVolume[t.fuelType] += Number(t.amount);
                         monthlyProfits[t.date] = (monthlyProfits[t.date] || 0) + (t.profit || 0);
                     }
                 });
-
                 const chartData = Object.keys(monthlyProfits).sort().map(date => ({ date, profit: monthlyProfits[date] })).slice(-7);
                 return { totalRevenue, totalProfit, totalSalesVolume, chartData };
             }, [stationTransactions]);
@@ -219,21 +201,13 @@
                 return list;
             }, [currentInventory, appSettings.alertThreshold]);
 
-            // --- 핸들러 ---
-            const handleStationChange = (id) => {
-                setCurrentStationId(id);
-                setStationSelectorOpen(false);
-                showToast(`${getStationName(id)}으로 전환됨`);
-            };
+            // 핸들러들
+            const handleStationChange = (id) => { setCurrentStationId(id); setStationSelectorOpen(false); showToast(`${getStationName(id)} 전환`); };
 
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if (!inputAmount || !inputPrice) return;
-                const amount = Number(inputAmount);
-                const price = Number(inputPrice);
-                const total = amount * price;
-                const uniqueId = Date.now() + Math.random();
-
+                const amount = Number(inputAmount); const price = Number(inputPrice); const total = amount * price; const uniqueId = Date.now() + Math.random();
                 let newTransaction = { id: uniqueId, stationId: currentStationId, type: inputType, date: inputDate, fuelType: inputFuelType, amount, price, total };
                 const nextInventory = { ...currentInventory };
 
@@ -250,68 +224,45 @@
                     newTransaction = { ...newTransaction, cost, profit };
                     nextInventory[inputFuelType] = { ...currentItem, amount: currentItem.amount - amount };
                 }
-
                 setInventoryMap({ ...inventoryMap, [currentStationId]: nextInventory });
                 setTransactions([newTransaction, ...transactions]);
                 setInputAmount(''); setInputPrice('');
                 showToast("저장되었습니다.");
             };
 
-            // 수정 핸들러
             const handleUpdateTransaction = (e) => {
                 e.preventDefault();
                 if (!editingTransaction) return;
-
                 const { id, type, date, fuelType, amount, price } = editingTransaction;
                 const oldTransaction = transactions.find(t => t.id === id);
                 if (!oldTransaction) return;
 
-                const newAmount = Number(amount);
-                const newPrice = Number(price);
-                const newTotal = newAmount * newPrice;
-                const amountDiff = newAmount - oldTransaction.amount;
-                
-                let newProfit = 0;
-                let cost = oldTransaction.cost || 0;
-                if (type === 'sale') {
-                   newProfit = (newPrice - cost) * newAmount;
-                }
+                const newAmount = Number(amount); const newPrice = Number(price); const newTotal = newAmount * newPrice; const amountDiff = newAmount - oldTransaction.amount;
+                let newProfit = 0; let cost = oldTransaction.cost || 0;
+                if (type === 'sale') newProfit = (newPrice - cost) * newAmount;
 
-                const updatedTransactions = transactions.map(t => 
-                  t.id === id ? { ...t, date, amount: newAmount, price: newPrice, total: newTotal, profit: newProfit } : t
-                );
+                const updatedTransactions = transactions.map(t => t.id === id ? { ...t, date, amount: newAmount, price: newPrice, total: newTotal, profit: newProfit } : t);
                 setTransactions(updatedTransactions);
 
                 if (amountDiff !== 0) {
-                  const targetStationId = oldTransaction.stationId; 
-                  const targetInventory = { ...inventoryMap[targetStationId] };
-                  const currentItem = targetInventory[fuelType];
-                  
+                  const targetStationId = oldTransaction.stationId; const targetInventory = { ...inventoryMap[targetStationId] }; const currentItem = targetInventory[fuelType];
                   let updatedInvAmount = currentItem.amount;
-                  if (type === 'purchase') updatedInvAmount += amountDiff;
-                  else updatedInvAmount -= amountDiff;
-
+                  if (type === 'purchase') updatedInvAmount += amountDiff; else updatedInvAmount -= amountDiff;
                   targetInventory[fuelType] = { ...currentItem, amount: updatedInvAmount };
-                  
                   setInventoryMap({ ...inventoryMap, [targetStationId]: targetInventory });
                 }
-
                 setEditingTransaction(null);
                 showToast("수정 완료되었습니다.");
             };
 
-            // 백업 및 복구
             const handleBackup = () => {
                 const data = { transactions, inventoryMap, appSettings, version: 'v6', date: new Date().toISOString() };
                 const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `주유소수익_백업_${new Date().toISOString().slice(0,10)}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast("백업 파일이 저장되었습니다.");
+                a.href = url; a.download = `주유소수익_백업_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                showToast("백업 파일 저장 완료");
             };
 
             const handleRestore = (e) => {
@@ -323,90 +274,49 @@
                         const data = JSON.parse(event.target.result);
                         if (data.transactions && data.inventoryMap) {
                             if(confirm("현재 데이터를 모두 덮어쓰고 복구하시겠습니까?")) {
-                                setTransactions(data.transactions);
-                                setInventoryMap(data.inventoryMap);
+                                setTransactions(data.transactions); setInventoryMap(data.inventoryMap);
                                 if(data.appSettings) setAppSettings(data.appSettings);
-                                showToast("데이터가 복구되었습니다.");
+                                showToast("복구 완료");
                             }
-                        } else {
-                            showToast("잘못된 백업 파일입니다.");
-                        }
-                    } catch (err) { showToast("파일을 읽을 수 없습니다."); }
+                        } else { showToast("잘못된 파일입니다."); }
+                    } catch (err) { showToast("파일 읽기 실패"); }
                 };
                 reader.readAsText(file);
-                e.target.value = ''; // 초기화
+                e.target.value = '';
             };
 
             const requestDelete = (id) => {
-                if (appSettings.safeMode) {
-                    showToast("안전 모드: 삭제하려면 설정에서 해제하세요.");
-                    return;
-                }
+                if (appSettings.safeMode) { showToast("안전 모드: 삭제하려면 설정을 끄세요."); return; }
                 setConfirmModal({ isOpen: true, type: 'delete', data: id, message: '정말 삭제하시겠습니까? 재고는 복구되지 않습니다.' });
             };
+
+            const requestClear = () => setConfirmModal({ isOpen: true, type: 'clear', data: null, message: `현재 지점(${currentStationName})의 데이터를 초기화하시겠습니까?` });
+            const requestLoadDemo = () => setConfirmModal({ isOpen: true, type: 'demo', data: null, message: `현재 지점(${currentStationName})에 샘플 데이터를 생성하시겠습니까?` });
 
             const executeConfirmAction = () => {
                 if (confirmModal.type === 'delete') {
                     setTransactions(transactions.filter(t => t.id !== confirmModal.data));
                     showToast("삭제되었습니다.");
-                }
-                // ... (기타 액션 생략)
-                else if (confirmModal.type === 'clear') {
-                    const otherStationTransactions = transactions.filter(t => t.stationId !== currentStationId);
-                    setTransactions(otherStationTransactions);
-                    setInventoryMap({
-                        ...inventoryMap,
-                        [currentStationId]: JSON.parse(JSON.stringify(INITIAL_INVENTORY_TEMPLATE))
-                    });
+                } else if (confirmModal.type === 'clear') {
+                    const otherData = transactions.filter(t => t.stationId !== currentStationId);
+                    setTransactions(otherData);
+                    setInventoryMap({ ...inventoryMap, [currentStationId]: JSON.parse(JSON.stringify(INITIAL_INVENTORY_TEMPLATE)) });
                     showToast("초기화되었습니다.");
                 } else if (confirmModal.type === 'demo') {
-                    const today = new Date();
-                    const newTransactions = [];
-                    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-                    const baseTime = Date.now();
-
+                    const today = new Date(); const newTransactions = []; const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min; const baseTime = Date.now();
                     for (let i = 7; i >= 1; i--) {
-                        const d = new Date(today);
-                        d.setDate(today.getDate() - i);
-                        const dateStr = d.toISOString().split('T')[0];
-                        const multiplier = currentStationId === 's1' ? 1 : (currentStationId === 's2' ? 0.8 : 0.5);
-
-                        const gasAmt = Math.round(rand(800, 1200) * multiplier);
-                        const gasPrc = 1730 + rand(-10, 10);
-                        newTransactions.push({
-                            id: baseTime - (i * 1000) - 1 - Math.random(),
-                            stationId: currentStationId,
-                            type: 'sale', date: dateStr, fuelType: 'gasoline',
-                            amount: gasAmt, price: gasPrc, cost: 1640,
-                            total: gasAmt * gasPrc, profit: (gasPrc - 1640) * gasAmt
-                        });
-                        
-                        const dieAmt = Math.round(rand(1500, 2500) * multiplier);
-                        const diePrc = 1580 + rand(-10, 10);
-                        newTransactions.push({
-                            id: baseTime - (i * 1000) - 2 - Math.random(),
-                            stationId: currentStationId,
-                            type: 'sale', date: dateStr, fuelType: 'diesel',
-                            amount: dieAmt, price: diePrc, cost: 1500,
-                            total: dieAmt * diePrc, profit: (diePrc - 1500) * dieAmt
-                        });
-
-                        const keroAmt = Math.round(rand(100, 300) * multiplier);
-                        const keroPrc = 1400 + rand(-5, 5);
-                        newTransactions.push({
-                            id: baseTime - (i * 1000) - 3 - Math.random(),
-                            stationId: currentStationId,
-                            type: 'sale', date: dateStr, fuelType: 'kerosene',
-                            amount: keroAmt, price: keroPrc, cost: 1300,
-                            total: keroAmt * keroPrc, profit: (keroPrc - 1300) * keroAmt
-                        });
+                        const d = new Date(today); d.setDate(today.getDate() - i); const dateStr = d.toISOString().split('T')[0]; const mul = currentStationId === 's1' ? 1 : 0.8;
+                        const gasAmt = Math.round(rand(800, 1200) * mul); const gasPrc = 1730 + rand(-10, 10);
+                        newTransactions.push({ id: baseTime - (i * 1000) - 1 - Math.random(), stationId: currentStationId, type: 'sale', date: dateStr, fuelType: 'gasoline', amount: gasAmt, price: gasPrc, cost: 1640, total: gasAmt * gasPrc, profit: (gasPrc - 1640) * gasAmt });
+                        const dieAmt = Math.round(rand(1500, 2500) * mul); const diePrc = 1580 + rand(-10, 10);
+                        newTransactions.push({ id: baseTime - (i * 1000) - 2 - Math.random(), stationId: currentStationId, type: 'sale', date: dateStr, fuelType: 'diesel', amount: dieAmt, price: diePrc, cost: 1500, total: dieAmt * diePrc, profit: (diePrc - 1500) * dieAmt });
+                        const keroAmt = Math.round(rand(100, 300) * mul); const keroPrc = 1400 + rand(-5, 5);
+                        newTransactions.push({ id: baseTime - (i * 1000) - 3 - Math.random(), stationId: currentStationId, type: 'sale', date: dateStr, fuelType: 'kerosene', amount: keroAmt, price: keroPrc, cost: 1300, total: keroAmt * keroPrc, profit: (keroPrc - 1300) * keroAmt });
                     }
-
                     const newInv = JSON.parse(JSON.stringify(INITIAL_INVENTORY_TEMPLATE));
                     newInv.gasoline.amount = 20000; newInv.gasoline.avgPrice = 1640;
                     newInv.diesel.amount = 40000; newInv.diesel.avgPrice = 1500;
                     newInv.kerosene.amount = 10000; newInv.kerosene.avgPrice = 1300;
-
                     const otherData = transactions.filter(t => t.stationId !== currentStationId);
                     setTransactions([...otherData, ...newTransactions]);
                     setInventoryMap({ ...inventoryMap, [currentStationId]: newInv });
@@ -415,56 +325,30 @@
                 setConfirmModal({ ...confirmModal, isOpen: false });
             };
 
-            const requestClear = () => {
-                setConfirmModal({ isOpen: true, type: 'clear', data: null, message: `현재 지점(${currentStationName})의 데이터를 초기화하시겠습니까?` });
-            };
-
-            const requestLoadDemo = () => {
-                setConfirmModal({ isOpen: true, type: 'demo', data: null, message: `현재 지점(${currentStationName})에 샘플 데이터를 생성하시겠습니까? 기존 데이터는 삭제됩니다.` });
-            };
-
             const handleCopyAllTransactions = () => {
-                if (stationTransactions.length === 0) {
-                    showToast("내역이 없습니다.");
-                    return;
-                }
-
+                if (stationTransactions.length === 0) { showToast("내역이 없습니다."); return; }
                 let text = `[⛽ ${currentStationName} 거래 일보]\n📅 출력: ${new Date().toLocaleDateString()}\n\n`;
                 const sorted = [...stationTransactions].sort((a, b) => b.id - a.id);
-                
                 sorted.forEach(t => {
                     const fuelName = t.fuelType === 'gasoline' ? '휘발유' : t.fuelType === 'diesel' ? '경유' : '등유';
                     const typeName = t.type === 'purchase' ? '🔵매입' : '🔴매출';
                     text += `${typeName} | ${t.date} | ${fuelName}\n📦 ${formatNumber(t.amount)}L × @${formatNumber(t.price)}\n💵 ${formatNumber(t.total)}원\n-----------------\n`;
                 });
-
-                copyToClipboard(text, () => showToast("일보 복사 완료 (카톡에 붙여넣기하세요)"), () => showToast("실패"));
+                copyToClipboard(text, () => showToast("일보 복사 완료"), () => showToast("실패"));
             };
 
-            // 그래프
+            // 차트
             const SimpleLineChart = ({ data }) => {
                 if (!data || data.length === 0) return <div className="h-32 flex items-center justify-center text-gray-400 text-xs">데이터 없음</div>;
-                const maxVal = Math.max(...data.map(d => d.profit));
-                const minVal = Math.min(...data.map(d => d.profit));
-                const range = maxVal - minVal || 1;
-                const points = data.map((d, i) => {
-                    const x = (i / (data.length - 1 || 1)) * 100;
-                    const y = 100 - ((d.profit - minVal) / range) * 80 - 10;
-                    return `${x},${y}`;
-                }).join(' ');
+                const minVal = Math.min(...data.map(d => d.profit)); const maxVal = Math.max(...data.map(d => d.profit)); const range = maxVal - minVal || 1;
+                const points = data.map((d, i) => { const x = (i / (data.length - 1 || 1)) * 100; const y = 100 - ((d.profit - minVal) / range) * 80 - 10; return `${x},${y}`; }).join(' ');
                 return (
                     <div className="w-full h-32 relative mt-2">
                         <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" preserveAspectRatio="none">
                             <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            {data.map((d, i) => {
-                                const x = (i / (data.length - 1 || 1)) * 100;
-                                const y = 100 - ((d.profit - minVal) / range) * 80 - 10;
-                                return <circle key={i} cx={x} cy={y} r="2" fill="white" stroke="#2563eb" strokeWidth="1.5" />;
-                            })}
+                            {data.map((d, i) => { const x = (i / (data.length - 1 || 1)) * 100; const y = 100 - ((d.profit - minVal) / range) * 80 - 10; return <circle key={i} cx={x} cy={y} r="2" fill="white" stroke="#2563eb" strokeWidth="1.5" />; })}
                         </svg>
-                        <div className="flex justify-between mt-1 text-[10px] text-gray-400">
-                            {data.map((d, i) => <span key={i}>{formatDateShort(d.date)}</span>)}
-                        </div>
+                        <div className="flex justify-between mt-1 text-[10px] text-gray-400">{data.map((d, i) => <span key={i}>{formatDateShort(d.date)}</span>)}</div>
                     </div>
                 );
             };
@@ -474,37 +358,27 @@
                 <div className="flex flex-col h-screen max-w-md mx-auto shadow-2xl bg-gray-50 overflow-hidden relative border-x border-gray-200">
                     
                     {/* 헤더 */}
-                    <header className="relative h-64 overflow-hidden rounded-b-[2rem] shadow-xl z-20 bg-blue-900 transition-all duration-500">
-                        <img src="https://images.unsplash.com/photo-1527018263374-1e3a79d9241b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-900/60 to-transparent"></div>
-                        <div className="relative z-10 p-6 pt-10 h-full flex flex-col justify-between text-white">
+                    <header className="relative h-36 z-20 transition-all duration-500">
+                        <div className="absolute inset-0 overflow-hidden rounded-b-[2rem] shadow-xl bg-blue-900">
+                            <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-900/60 to-transparent"></div>
+                        </div>
+                        <div className="relative z-10 p-5 pt-6 h-full flex flex-col justify-between text-white">
                             <div className="flex justify-between items-start">
-                                <div>
-                                    <span className="text-blue-200 text-xs font-bold tracking-wider flex items-center mb-1"><Icon name="fuel" size={14} className="mr-1"/> REVENUE MANAGER PRO</span>
-                                    <h1 className="text-2xl font-extrabold drop-shadow-md">주유소 수익 매니저</h1>
-                                </div>
-                                <button onClick={()=>setHelpModalOpen(true)} className="bg-white/10 p-2 rounded-full backdrop-blur-md hover:bg-white/20"><Icon name="help-circle" size={20}/></button>
+                                <div><span className="text-blue-200 text-xs font-bold tracking-wider flex items-center mb-0.5"><Icon name="fuel" size={12} className="mr-1"/> REVENUE MANAGER PRO</span><h1 className="text-xl font-extrabold drop-shadow-md">주유소 수익 매니저</h1></div>
+                                <button onClick={()=>setHelpModalOpen(true)} className="bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-md hover:bg-white/20 text-xs font-bold transition-colors">도움</button>
                             </div>
-                            
-                            {/* 지점 선택기 */}
                             <div className="relative">
-                                <button onClick={()=>setStationSelectorOpen(!stationSelectorOpen)} className="w-full flex items-center justify-between bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-xl hover:bg-white/20 active:scale-95 transition-all">
-                                    <div className="flex items-center">
-                                        <div className="bg-blue-500 p-1.5 rounded-lg mr-3 shadow-lg"><Icon name="map-pin" size={18} className="text-white"/></div>
-                                        <div className="text-left">
-                                            <p className="text-[10px] text-blue-200 font-medium">CURRENT STATION</p>
-                                            <span className="text-lg font-bold">{currentStationName}</span>
-                                        </div>
-                                    </div>
-                                    <Icon name="chevron-down" size={20} className={`text-blue-200 transition-transform ${stationSelectorOpen ? 'rotate-180':''}`}/>
+                                <button onClick={()=>setStationSelectorOpen(!stationSelectorOpen)} className="w-full flex items-center justify-between bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl hover:bg-white/20 active:scale-95 transition-all">
+                                    <div className="flex items-center"><div className="bg-blue-500 p-1 rounded-lg mr-2.5 shadow-lg"><Icon name="map-pin" size={16} className="text-white"/></div><div className="text-left"><p className="text-[10px] text-blue-200 font-medium leading-none mb-0.5">CURRENT STATION</p><span className="text-base font-bold leading-none">{currentStationName}</span></div></div>
+                                    <Icon name="chevron-down" size={18} className={`text-blue-200 transition-transform ${stationSelectorOpen ? 'rotate-180':''}`}/>
                                 </button>
                                 {stationSelectorOpen && (
                                     <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-2xl z-50 text-gray-800 overflow-hidden animate-fade-in border border-gray-100">
                                         <div className="bg-gray-50 px-4 py-2 text-[10px] font-bold text-gray-400">지점 선택</div>
                                         {STATION_IDS.map(id => (
                                             <button key={id} onClick={()=>{handleStationChange(id); setStationSelectorOpen(false);}} className={`w-full text-left px-4 py-3 flex items-center space-x-3 hover:bg-blue-50 ${currentStationId===id ? 'bg-blue-50/50':''}`}>
-                                                <div className={`w-2 h-2 rounded-full ${currentStationId===id?'bg-blue-600':'bg-gray-300'}`}></div>
-                                                <span className={`text-sm ${currentStationId===id?'font-bold text-blue-700':'font-medium text-gray-600'}`}>{getStationName(id)}</span>
+                                                <div className={`w-2 h-2 rounded-full ${currentStationId===id?'bg-blue-600':'bg-gray-300'}`}></div><span className={`text-sm ${currentStationId===id?'font-bold text-blue-700':'font-medium text-gray-600'}`}>{getStationName(id)}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -518,17 +392,15 @@
 
                     {/* 메인 */}
                     <main className="flex-1 overflow-y-auto pb-24 p-4 space-y-4" onClick={()=>setStationSelectorOpen(false)}>
-                        
-                        {/* 대시보드 */}
                         {activeTab === 'dashboard' && (
                             <>
                                 <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
                                     <div className="flex justify-between items-start mb-2">
-                                        <div><h3 className="text-gray-500 text-sm font-semibold">{currentStationName} 순수익</h3><div className="flex items-baseline space-x-1 mt-1"><span className="text-4xl font-extrabold text-gray-800">{formatNumber(Math.round(summary.totalProfit))}</span><span className="text-base text-gray-500 font-medium">원</span></div></div>
+                                        <div><h3 className="text-gray-500 text-sm font-semibold">{currentStationName} 매출이익</h3><div className="flex items-baseline space-x-1 mt-1"><span className="text-4xl font-extrabold text-gray-800">{formatNumber(Math.round(summary.totalProfit))}</span><span className="text-base text-gray-500 font-medium">원</span></div></div>
                                         <div className={`p-2 rounded-xl shadow-sm ${summary.totalProfit>=0?'bg-blue-50 text-blue-600':'bg-red-50 text-red-600'}`}><Icon name="trending-up" size={24}/></div>
                                     </div>
                                     <div className="w-full bg-gray-100 h-2 rounded-full mt-5 overflow-hidden"><div className={`h-full rounded-full transition-all duration-1000 ${achievementRate>=100?'bg-gradient-to-r from-yellow-400 to-orange-500':'bg-blue-600'}`} style={{width: `${Math.min(100, achievementRate)}%`}}></div></div>
-                                    <div className="flex justify-between mt-2 text-xs text-gray-400 font-medium"><span>목표 {formatNumber(currentGoal/10000)}만원</span><span className={`${achievementRate>=100?'text-orange-500':'text-blue-600'} font-bold`}>{achievementRate}% 달성</span></div>
+                                    <div className="flex justify-between mt-2 text-xs text-gray-400 font-medium"><span>목표 {formatNumber(currentGoal)}원</span><span className={`${achievementRate>=100?'text-orange-500':'text-blue-600'} font-bold`}>{achievementRate}% 달성</span></div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-3">
                                     {['gasoline','diesel','kerosene'].map(type => {
@@ -548,46 +420,27 @@
                                 </div>
                             </>
                         )}
-
-                        {/* 분석 */}
                         {activeTab === 'analysis' && (
                             <>
                                 <h2 className="text-lg font-bold text-gray-800 flex items-center"><Icon name="trending-up" size={20} className="mr-2 text-blue-600"/> 분석</h2>
-                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                                    <h3 className="text-sm font-bold text-gray-700">일별 수익 추이</h3>
-                                    <SimpleLineChart data={summary.chartData} />
-                                </div>
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-sm font-bold text-gray-700">일별 매출이익 추이</h3><SimpleLineChart data={summary.chartData} /></div>
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                                     <h3 className="text-sm font-bold text-gray-700 mb-4">유종별 판매량</h3>
                                     <div className="space-y-3">
                                         {['gasoline','diesel','kerosene'].map(type => {
-                                            const val = summary.totalSalesVolume[type];
-                                            const total = Object.values(summary.totalSalesVolume).reduce((a,b)=>a+b,0)||1;
-                                            const pct = Math.round((val/total)*100);
-                                            const item = currentInventory[type];
-                                            return (
-                                                <div key={type}>
-                                                    <div className="flex justify-between text-xs mb-1"><span className="font-bold text-gray-600">{item.name}</span><span className="text-gray-400">{pct}% ({formatNumber(val)}L)</span></div>
-                                                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden"><div className={`h-full ${item.color} transition-all duration-500`} style={{width:`${pct}%`}}></div></div>
-                                                </div>
-                                            )
+                                            const val = summary.totalSalesVolume[type]; const total = Object.values(summary.totalSalesVolume).reduce((a,b)=>a+b,0)||1; const pct = Math.round((val/total)*100); const item = currentInventory[type];
+                                            return (<div key={type}><div className="flex justify-between text-xs mb-1"><span className="font-bold text-gray-600">{item.name}</span><span className="text-gray-400">{pct}% ({formatNumber(val)}L)</span></div><div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden"><div className={`h-full ${item.color} transition-all duration-500`} style={{width:`${pct}%`}}></div></div></div>)
                                         })}
                                     </div>
                                 </div>
                             </>
                         )}
-
-                        {/* 입력 */}
                         {activeTab === 'input' && (
                             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                                 <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center"><Icon name="plus" size={20} className="mr-2 text-blue-600"/>입력</h2>
                                 <p className="text-xs text-gray-400 mb-6 flex items-center"><Icon name="map-pin" size={12} className="mr-1"/> 현재 지점: <span className="text-blue-600 font-bold ml-1">{currentStationName}</span></p>
                                 <form onSubmit={handleSubmit} className="space-y-5">
-                                    <div className="flex bg-gray-100 p-1.5 rounded-xl">
-                                        {['sale','purchase'].map(t => (
-                                            <button key={t} type="button" onClick={()=>setInputType(t)} className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${inputType===t ? (t==='sale'?'bg-white text-blue-600 shadow-sm':'bg-white text-green-600 shadow-sm'):'text-gray-400'}`}>{t==='sale'?'매출 (판매)':'매입 (입고)'}</button>
-                                        ))}
-                                    </div>
+                                    <div className="flex bg-gray-100 p-1.5 rounded-xl">{['sale','purchase'].map(t => (<button key={t} type="button" onClick={()=>setInputType(t)} className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${inputType===t ? (t==='sale'?'bg-white text-blue-600 shadow-sm':'bg-white text-green-600 shadow-sm'):'text-gray-400'}`}>{t==='sale'?'매출 (판매)':'매입 (입고)'}</button>))}</div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1"><label className="text-xs font-bold text-gray-500 ml-1">날짜</label><input type="date" value={inputDate} onChange={e=>setInputDate(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"/></div>
                                         <div className="space-y-1"><label className="text-xs font-bold text-gray-500 ml-1">유종</label><select value={inputFuelType} onChange={e=>setInputFuelType(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"><option value="gasoline">휘발유</option><option value="diesel">경유</option><option value="kerosene">등유</option></select></div>
@@ -598,20 +451,9 @@
                                 </form>
                             </div>
                         )}
-
-                        {/* 내역 */}
                         {activeTab === 'history' && (
                             <>
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg font-bold text-gray-800">최근 거래 내역</h2>
-                                    <button 
-                                        onClick={handleCopyAllTransactions} 
-                                        className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
-                                    >
-                                        <Icon name="share-2" size={14} />
-                                        <span>카톡 공유 (전체)</span>
-                                    </button>
-                                </div>
+                                <div className="flex justify-between items-center mb-4"><h2 className="text-lg font-bold text-gray-800">최근 거래 내역</h2><button onClick={handleCopyAllTransactions} className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"><Icon name="share-2" size={14} /><span>카톡 공유 (전체)</span></button></div>
                                 <div className="space-y-3">
                                     {stationTransactions.sort((a,b)=>b.id-a.id).map(item => (
                                         <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
@@ -622,15 +464,9 @@
                                                 </div>
                                                 <div className="text-right"><p className="font-bold text-gray-900">{formatNumber(item.total)}원</p><p className="text-xs text-gray-400">@{formatNumber(item.price)}</p></div>
                                             </div>
-                                            
-                                            {/* 수정 및 삭제 버튼 복구 */}
                                             <div className="flex justify-end space-x-2 mt-2 pt-2 border-t border-gray-50">
-                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-                                                    <Icon name="edit-2" size={16} />
-                                                </button>
-                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                                    <Icon name="trash-2" size={16} />
-                                                </button>
+                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"><Icon name="edit-2" size={16} /></button>
+                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Icon name="trash-2" size={16} /></button>
                                             </div>
                                         </div>
                                     ))}
@@ -638,47 +474,27 @@
                                 </div>
                             </>
                         )}
-
-                        {/* 설정 */}
                         {activeTab === 'settings' && (
                             <div className="space-y-5">
                                 <h2 className="text-lg font-bold text-gray-800">설정</h2>
-                                
-                                {/* 데이터 안전 잠금 (강제 삭제 방지) */}
                                 <div className={`p-5 rounded-2xl shadow-sm border ${appSettings.safeMode ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100'}`}>
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="flex items-center"><div className={`p-2 rounded-lg mr-3 ${appSettings.safeMode ? 'bg-green-200 text-green-700' : 'bg-gray-100 text-gray-500'}`}><Icon name="lock" size={20}/></div><div><h3 className="font-bold text-gray-800">데이터 보호 모드</h3><p className="text-xs text-gray-500">{appSettings.safeMode ? '삭제 버튼이 비활성화됩니다.' : '데이터 삭제가 가능합니다.'}</p></div></div>
                                         <button onClick={()=>setAppSettings({...appSettings, safeMode: !appSettings.safeMode})} className={`w-12 h-6 rounded-full transition-colors relative ${appSettings.safeMode ? 'bg-green-500':'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${appSettings.safeMode ? 'left-7':'left-1'}`}></div></button>
                                     </div>
                                 </div>
-
-                                {/* 목표 설정 */}
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                                     <div className="flex items-center mb-3"><Icon name="target" size={18} className="text-purple-600 mr-2"/><h3 className="font-bold text-gray-800">월 목표 금액</h3></div>
                                     <input type="number" value={currentGoal} onChange={e=>setAppSettings({...appSettings, goals: {...appSettings.goals, [currentStationId]: Number(e.target.value)}})} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold"/>
+                                    <div className="text-right mt-2 text-sm text-gray-500 font-medium">({formatNumber(currentGoal)}원)</div>
                                 </div>
-
-                                {/* 지점 이름 변경 */}
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                                     <div className="flex items-center mb-3"><Icon name="map-pin" size={18} className="text-indigo-600 mr-2"/><h3 className="font-bold text-gray-800">지점 이름 관리</h3></div>
-                                    <div className="space-y-2">
-                                        {STATION_IDS.map(id => (
-                                            <div key={id} className="flex items-center"><span className="w-8 text-xs font-bold text-gray-400">{id.toUpperCase()}</span><input type="text" value={appSettings.stationNames[id]} onChange={e=>setAppSettings({...appSettings, stationNames: {...appSettings.stationNames, [id]: e.target.value}})} className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold"/></div>
-                                        ))}
-                                    </div>
+                                    <div className="space-y-2">{STATION_IDS.map(id => (<div key={id} className="flex items-center"><span className="w-8 text-xs font-bold text-gray-400">{id.toUpperCase()}</span><input type="text" value={appSettings.stationNames[id]} onChange={e=>setAppSettings({...appSettings, stationNames: {...appSettings.stationNames, [id]: e.target.value}})} className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold"/></div>))}</div>
                                 </div>
-
-                                {/* 백업 및 복구 */}
                                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                                     <div className="flex items-center mb-4"><Icon name="save" size={18} className="text-blue-600 mr-2"/><h3 className="font-bold text-gray-800">데이터 백업 & 복구</h3></div>
-                                    <div className="flex space-x-3">
-                                        <button onClick={handleBackup} className="flex-1 py-3 border border-blue-200 text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50">파일로 저장 (백업)</button>
-                                        <label className="flex-1 py-3 border border-gray-200 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-50 flex items-center justify-center cursor-pointer">
-                                            파일 불러오기 (복구)
-                                            <input type="file" accept=".json" onChange={handleRestore} className="hidden" />
-                                        </label>
-                                    </div>
-                                    <p className="text-[10px] text-gray-400 mt-2 text-center">폰을 바꿔도 파일을 통해 데이터를 옮길 수 있습니다.</p>
+                                    <div className="flex space-x-3"><button onClick={handleBackup} className="flex-1 py-3 border border-blue-200 text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50">파일로 저장</button><label className="flex-1 py-3 border border-gray-200 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-50 flex items-center justify-center cursor-pointer">파일 불러오기<input type="file" accept=".json" onChange={handleRestore} className="hidden" /></label></div>
                                 </div>
                             </div>
                         )}
@@ -687,13 +503,11 @@
                     {/* 하단 탭 */}
                     <nav className="bg-white border-t border-gray-200 flex fixed bottom-0 w-full max-w-md pb-safe z-40 h-16">
                         {[{id:'dashboard',icon:'bar-chart-3',label:'현황'},{id:'analysis',icon:'trending-up',label:'분석'},{id:'input',icon:'plus',label:'입력', special:true},{id:'history',icon:'history',label:'내역'},{id:'settings',icon:'settings',label:'설정'}].map(tab => (
-                            tab.special ? 
-                            <div key={tab.id} className="relative -top-6 flex-1 flex justify-center"><button onClick={()=>setActiveTab(tab.id)} className="w-14 h-14 bg-blue-600 rounded-full text-white shadow-lg shadow-blue-300 flex items-center justify-center active:scale-95 transition-transform"><Icon name={tab.icon} size={28}/></button></div> :
-                            <button key={tab.id} onClick={()=>setActiveTab(tab.id)} className={`flex-1 flex flex-col items-center justify-center ${activeTab===tab.id?'text-blue-600':'text-gray-400'}`}><Icon name={tab.icon} size={24} className={activeTab===tab.id?'scale-110 transition-transform':''}/><span className="text-[10px] font-bold mt-1">{tab.label}</span></button>
+                            tab.special ? <div key={tab.id} className="relative -top-6 flex-1 flex justify-center"><button onClick={()=>setActiveTab(tab.id)} className="w-14 h-14 bg-blue-600 rounded-full text-white shadow-lg shadow-blue-300 flex items-center justify-center active:scale-95 transition-transform font-bold text-sm">입력</button></div> : <button key={tab.id} onClick={()=>setActiveTab(tab.id)} className={`flex-1 flex flex-col items-center justify-center ${activeTab===tab.id?'text-blue-600':'text-gray-400'}`}><Icon name={tab.icon} size={24} className={activeTab===tab.id?'scale-110 transition-transform':''}/><span className="text-[10px] font-bold mt-1">{tab.label}</span></button>
                         ))}
                     </nav>
 
-                    {/* 모달: 확인 */}
+                    {/* 모달 등 */}
                     {confirmModal.isOpen && (
                         <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
                             <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl animate-fade-in text-center">
@@ -704,35 +518,63 @@
                             </div>
                         </div>
                     )}
-
-                    {/* 편집 모달 */}
                     {editingTransaction && (
                         <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
                             <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-fade-in">
                                 <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold text-gray-900">거래 수정</h3><button onClick={() => setEditingTransaction(null)}><Icon name="x" size={20}/></button></div>
                                 <form onSubmit={handleUpdateTransaction} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div><label className="text-xs text-gray-500 font-bold ml-1">날짜</label><input type="date" value={editingTransaction.date} onChange={(e) => setEditingTransaction({...editingTransaction, date: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div>
-                                        <div><label className="text-xs text-gray-500 font-bold ml-1">수량 (L)</label><input type="number" value={editingTransaction.amount} onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div>
-                                    </div>
+                                    <div className="grid grid-cols-2 gap-3"><div><label className="text-xs text-gray-500 font-bold ml-1">날짜</label><input type="date" value={editingTransaction.date} onChange={(e) => setEditingTransaction({...editingTransaction, date: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div><div><label className="text-xs text-gray-500 font-bold ml-1">수량 (L)</label><input type="number" value={editingTransaction.amount} onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div></div>
                                     <div><label className="text-xs text-gray-500 font-bold ml-1">단가 (원)</label><input type="number" value={editingTransaction.price} onChange={(e) => setEditingTransaction({...editingTransaction, price: e.target.value})} className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm font-bold" /></div>
                                     <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center"><Icon name="check" size={18} className="mr-2"/> 수정 완료</button>
                                 </form>
                             </div>
                         </div>
                     )}
-
-                    {/* 도움말 모달 */}
+                    
+                    {/* 상세 도움말 팝업 (강화됨) */}
                     {helpModalOpen && (
                         <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                            <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-fade-in max-h-[80vh] overflow-y-auto">
-                                <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="font-bold text-lg text-blue-600 flex items-center"><Icon name="book-open" size={20} className="mr-2"/>사용법</h3><button onClick={()=>setHelpModalOpen(false)}><Icon name="x" size={20}/></button></div>
-                                <div className="space-y-4 text-sm text-gray-600">
-                                    <div><strong className="text-gray-800 block mb-1">1. 데이터 보호 (중요)</strong>설정 탭의 '데이터 보호 모드'가 켜져 있으면 삭제 버튼이 비활성화됩니다. 삭제하려면 설정에서 끄세요.</div>
-                                    <div><strong className="text-gray-800 block mb-1">2. 백업/복구</strong>핸드폰을 바꾸거나 데이터를 안전하게 보관하려면 [설정] > [파일로 저장]을 누르세요. 나중에 [파일 불러오기]로 복구할 수 있습니다.</div>
-                                    <div><strong className="text-gray-800 block mb-1">3. 지점 관리</strong>상단의 지점 이름을 누르면 1,2,3호점을 전환할 수 있습니다.</div>
+                            <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-fade-in max-h-[85vh] overflow-y-auto">
+                                <div className="flex justify-between items-center mb-5 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
+                                    <div className="flex items-center text-blue-600"><Icon name="book-open" size={22} className="mr-2"/><h3 className="text-xl font-bold">사용자 매뉴얼</h3></div>
+                                    <button onClick={()=>setHelpModalOpen(false)} className="p-1 bg-gray-100 rounded-full hover:bg-gray-200"><Icon name="x" size={20}/></button>
                                 </div>
-                                <button onClick={()=>setHelpModalOpen(false)} className="w-full mt-6 py-3 bg-blue-600 text-white font-bold rounded-xl">닫기</button>
+                                <div className="space-y-6 text-sm text-gray-700">
+                                    {/* 1. 지점 관리 */}
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <h4 className="font-bold text-indigo-600 mb-2 flex items-center"><Icon name="map-pin" size={16} className="mr-1.5"/>1. 지점 관리 (필수)</h4>
+                                        <p className="text-xs leading-relaxed text-gray-500 mb-2">상단의 <span className="text-gray-800 font-bold">지점 이름</span>을 누르면 1호점, 2호점, 3호점을 선택할 수 있습니다. 거래를 입력하기 전에 꼭 지점을 확인하세요!</p>
+                                        <p className="text-xs text-gray-400">* 지점 이름은 [설정] 탭에서 변경 가능합니다.</p>
+                                    </div>
+
+                                    {/* 2. 거래 입력 */}
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <h4 className="font-bold text-blue-600 mb-2 flex items-center"><Icon name="plus-circle" size={16} className="mr-1.5"/>2. 거래 입력 (매일)</h4>
+                                        <ul className="text-xs space-y-2 text-gray-500">
+                                            <li className="flex items-start"><span className="text-green-600 font-bold mr-1">매입:</span> 유조차 입고 시 수량/단가 입력. 탱크 재고가 자동으로 늘어납니다.</li>
+                                            <li className="flex items-start"><span className="text-blue-600 font-bold mr-1">매출:</span> 마감 시 판매량 입력. (판매가 - 평균원가)로 매출이익이 자동 계산됩니다.</li>
+                                        </ul>
+                                    </div>
+
+                                    {/* 3. 현황 및 분석 */}
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <h4 className="font-bold text-green-600 mb-2 flex items-center"><Icon name="bar-chart-3" size={16} className="mr-1.5"/>3. 현황 및 분석</h4>
+                                        <p className="text-xs leading-relaxed text-gray-500 mb-2"><strong>대시보드:</strong> 현재 탱크 재고와 이번 달 매출이익 목표 달성률을 한눈에 볼 수 있습니다.</p>
+                                        <p className="text-xs leading-relaxed text-gray-500"><strong>분석 탭:</strong> 최근 7일간 수익 변화와 유종별 판매 비율을 그래프로 제공합니다.</p>
+                                    </div>
+
+                                    {/* 4. 내역 및 데이터 보호 */}
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <h4 className="font-bold text-orange-600 mb-2 flex items-center"><Icon name="shield" size={16} className="mr-1.5"/>4. 데이터 관리 (중요)</h4>
+                                        <ul className="text-xs space-y-2 text-gray-500">
+                                            <li><strong className="text-gray-700">수정/삭제:</strong> [내역] 탭에서 가능합니다. 단, [설정]의 <span className="text-green-600 font-bold">'데이터 보호 모드'</span>가 켜져 있으면 삭제가 불가능합니다.</li>
+                                            <li><strong className="text-gray-700">백업:</strong> 폰을 바꾸거나 앱을 삭제할 때를 대비해 [설정] > [파일로 저장]을 꼭 해주세요.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div className="mt-6 pt-2">
+                                    <button onClick={()=>setHelpModalOpen(false)} className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">확인했습니다</button>
+                                </div>
                             </div>
                         </div>
                     )}
