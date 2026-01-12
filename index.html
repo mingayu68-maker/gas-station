@@ -32,18 +32,18 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- 아이콘 컴포넌트 ---
-        const Icon = ({ name, size = 24, className = "" }) => {
+        // --- 아이콘 컴포넌트 (속성 확장) ---
+        const Icon = ({ name, size = 24, className = "", strokeWidth = 2 }) => {
             const iconRef = useRef(null);
             useEffect(() => {
                 if (iconRef.current) {
                     lucide.createIcons({
                         root: iconRef.current,
                         name: name,
-                        attrs: { width: size, height: size, class: className }
+                        attrs: { width: size, height: size, class: className, "stroke-width": strokeWidth }
                     });
                 }
-            }, [name, size, className]);
+            }, [name, size, className, strokeWidth]);
             return <span ref={iconRef} className="inline-flex items-center justify-center" />;
         };
 
@@ -145,6 +145,16 @@
             const currentInventory = inventoryMap[currentStationId];
             const currentGoal = appSettings.goals[currentStationId] || 5000000;
 
+            // 유종별 색상 스타일 헬퍼
+            const getFuelStyle = (fuelType) => {
+                switch(fuelType) {
+                    case 'gasoline': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                    case 'diesel': return 'bg-green-100 text-green-800 border-green-200';
+                    case 'kerosene': return 'bg-red-100 text-red-800 border-red-200';
+                    default: return 'bg-gray-100 text-gray-800';
+                }
+            };
+
             // 저장
             useEffect(() => { localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(transactions)); }, [transactions]);
             useEffect(() => { localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(inventoryMap)); }, [inventoryMap]);
@@ -204,13 +214,10 @@
             // 핸들러들
             const handleStationChange = (id) => { setCurrentStationId(id); setStationSelectorOpen(false); showToast(`${getStationName(id)} 전환`); };
 
-            // [개선된 Focus 핸들러] 키패드가 올라올 때 화면을 충분히 위로 올림
             const handleFocus = (e) => {
                 setTimeout(() => {
-                    // smooth 대신 auto를 사용하여 즉각적으로 반응하게 할 수도 있지만, 부드러운 이동을 위해 smooth 유지
-                    // block: 'center'는 요소를 화면 중앙에 위치시킴. 
                     e.target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-                }, 400); // 키패드 올라오는 시간을 고려하여 딜레이
+                }, 400); 
             };
 
             const handleSubmit = (e) => {
@@ -469,14 +476,27 @@
                                             <div className="flex justify-between items-center mb-2">
                                                 <div className="flex items-center space-x-3">
                                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${item.type==='purchase'?'bg-green-50 text-green-600':'bg-blue-50 text-blue-600'}`}><Icon name={item.type==='purchase'?'arrow-right':'dollar-sign'} className={item.type==='purchase'?'rotate-90':''} size={18}/></div>
-                                                    <div><p className="font-bold text-gray-800">{item.type==='purchase'?'입고':'판매'} {formatNumber(item.amount)}L</p><p className="text-xs text-gray-400">{item.date} • {currentInventory[item.fuelType].name}</p></div>
+                                                    <div>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="font-bold text-gray-800">{item.type==='purchase'?'입고':'판매'} {formatNumber(item.amount)}L</span>
+                                                            {/* 유종 배지 추가 */}
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getFuelStyle(item.fuelType)}`}>
+                                                                {currentInventory[item.fuelType].name}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-gray-400 mt-0.5">{item.date}</p>
+                                                    </div>
                                                 </div>
                                                 <div className="text-right"><p className="font-bold text-gray-900">{formatNumber(item.total)}원</p><p className="text-xs text-gray-400">@{formatNumber(item.price)}</p></div>
                                             </div>
-                                            <div className="flex justify-end space-x-2 mt-2 pt-2 border-t border-gray-50">
-                                                {/* 수정/삭제 버튼: 검은색 아이콘으로 변경 */}
-                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-black hover:bg-gray-100 rounded-lg transition-colors"><Icon name="edit-2" size={20} /></button>
-                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-black hover:bg-gray-100 rounded-lg transition-colors"><Icon name="trash-2" size={20} /></button>
+                                            <div className="flex justify-end space-x-3 mt-2 pt-2 border-t border-gray-50">
+                                                {/* 수정/삭제 버튼: 진한 검은색 아이콘으로 변경 */}
+                                                <button onClick={() => setEditingTransaction(item)} className="p-2 text-black hover:bg-gray-200 rounded-lg transition-colors border border-gray-200">
+                                                    <Icon name="edit-2" size={20} strokeWidth={3} />
+                                                </button>
+                                                <button onClick={() => requestDelete(item.id)} className="p-2 text-black hover:bg-gray-200 rounded-lg transition-colors border border-gray-200">
+                                                    <Icon name="trash-2" size={20} strokeWidth={3} />
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
